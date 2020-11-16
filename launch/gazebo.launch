@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="paused" default="false"/>
+  <arg name="gazebo_gui" default="true"/>
+  <!--arg name="urdf_path" default="$(find ur5_description)/urdf/ur5_robotiq85_gripper.urdf.xacro"/-->
+  <arg name="urdf_path" default="$(find ur5_gripper_moveit_config)/ur5_description/urdf/ur5_robotiq85_gripper.urdf.xacro"/>
+
+  <!-- startup simulated world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" default="worlds/empty.world"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="gui" value="$(arg gazebo_gui)"/>
+  </include>
+
+  <!-- send robot urdf to param server -->
+  <!--param name="robot_description" textfile="$(arg urdf_path)" /-->
+  <param name="robot_description" command="$(find xacro)/xacro.py --inorder $(arg urdf_path) gazebo:=true"/>
+
+
+  <!-- push robot_description to factory and spawn robot in gazebo at the origin, change x,y,z arguments to spawn in a different position -->
+  <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model robot -x 0 -y 0 -z 0.5"
+    respawn="false" output="screen" />
+
+
+  <!-- spawn ur5 pole -->
+  <param name="pole_description" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/ur_pole.urdf.xacro gazebo:=true"/>
+  <node name="spawn_pole" pkg="gazebo_ros" type="spawn_model" args="-urdf -param pole_description -model ur_pole -x 0 -y 0 -z 0.25"
+    respawn="false" output="screen" />
+
+
+  <!-- spawn table -->
+  <param name="table_description" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/table.urdf.xacro gazebo:=true"/>
+  <node name="spawn_table" pkg="gazebo_ros" type="spawn_model" args="-urdf -param table_description -model table -x 0.5 -y -0.5 -z 0.15"
+    respawn="false" output="screen" />
+
+
+  <include file="$(find ur5_gripper_moveit_config)/launch/ros_controllers.launch"/>
+
+  <!-- Convert /joint_states messages published by Gazebo to /tf messages,
+       e.g., for rviz-->
+  <node name="robot_state_publisher" pkg="robot_state_publisher"
+        type="robot_state_publisher" output="screen"/>
+
+
+</launch>

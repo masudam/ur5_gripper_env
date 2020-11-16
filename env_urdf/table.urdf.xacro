@@ -1,0 +1,43 @@
+<?xml version="1.0" ?>
+<robot name="table" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find ur5_gripper_moveit_config)/env_urdf/common.xacro"/>
+  <xacro:include filename="$(find ur5_gripper_moveit_config)/env_urdf/camera.urdf.xacro"/>
+
+  <link name="world"/>
+  <joint name="table_joint" type="fixed" >
+    <parent link="world" />
+    <child link="base_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <box_inertial mass="1.0" height="0.8" width="0.8" depth="0.3"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.8 0.8 0.3"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.8 0.8 0.3" />
+      </geometry>
+    </collision>
+  </link>
+
+  <xacro:bird_camera_v0 parent="base_link"/>
+
+
+  <gazebo reference="base_link">
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+
+  <xacro:camera_gazebo_v0/>
+
+
+
+</robot>
