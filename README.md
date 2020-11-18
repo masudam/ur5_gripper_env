@@ -1,7 +1,5 @@
 # ur5_gripper_moveit_config
 
-(制作途中なので不具合あり)
-
 ur5とgripperを付けた環境
 
 https://github.com/utecrobotics/ur5
@@ -20,3 +18,7 @@ moveitなどを起動する場合は追加で
 ```
 roslaunch ur5_gripper_moveit_config moveit_rviz.launch
 ```
+
+実行したとき、p gainがないみたいなエラーは出るが動作に支障はなし
+
+moveitの方は、sensor pluginがないエラーと、'hand' is no a chainと出るが、こちらも支障はなし
