@@ -7,7 +7,19 @@ https://github.com/utecrobotics/ur5
 
 このgitと
 https://github.com/masudam/robotiq.git
-をwork_spaceにcloneして使う
+をwork_spaceにcloneすることで使用可能
+
+### Installation
+```
+cd your_work_space/src
+git clone https://github.com/masudam/ur5_gripper_moveit_config.git
+git clone https://github.com/masudam/robotiq.git
+
+cd ../
+catkin_make
+# or catkin build
+source devel/setup.bash
+```
 
 
 ### 実行
