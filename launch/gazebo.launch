@@ -34,6 +34,20 @@
     respawn="false" output="screen" />
 
 
+
+
+  <param name="obj_description" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/objects/obj_1.urdf.xacro gazebo:=true"/>
+  <node name="spawn_obj_1" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description -model obj_1 -x 0.5 -y -0.5 -z 0.4"
+    respawn="false" output="screen" />
+
+
+
+
+
+
+
+
+
   <include file="$(find ur5_gripper_moveit_config)/launch/ros_controllers.launch"/>
 
   <!-- Convert /joint_states messages published by Gazebo to /tf messages,
