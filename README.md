@@ -8,7 +8,7 @@ https://github.com/utecrobotics/ur5
 を元に、melodicで動くように変更を加えmoveit_setup_Assitantなどで作成
 
 このgitと
-https://github.com/utecrobotics/robotiq.git
+https://github.com/masudam/robotiq.git
 をwork_spaceにcloneして使う
 
 
