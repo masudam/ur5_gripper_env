@@ -154,20 +154,50 @@ if __name__ == '__main__':
     print(ur_manipulator.get_angles())
     print(ur_manipulator.get_endpoint())
 
-    pose = ur_manipulator.get_endpoint()
-    pose.position.y += 0.2
-    ur_manipulator.make_ik_move(pose)
+    #pose = ur_manipulator.get_endpoint()
+    #pose.position.y += 0.2
+    #ur_manipulator.make_ik_move(pose)
 
-    pose = ur_manipulator.get_endpoint()
-    pose.position.y -= 0.2
-    ur_manipulator.make_ik_move(pose)
+    #pose = ur_manipulator.get_endpoint()
+    #pose.position.y -= 0.2
+    #ur_manipulator.make_ik_move(pose)
 
-    ur_manipulator.rm_object()
+    #ur_manipulator.rm_object()
     ur_manipulator.gripper_move("close")
     ur_manipulator.gripper_move("open")
     ur_manipulator.gripper_move("close")
 
+    import geometry_msgs.msg
+    scene = moveit_commander.PlanningSceneInterface()
+    box_pose = geometry_msgs.msg.PoseStamped()
+    box_pose.header.frame_id = "test_obstacle"
+    box_pose.pose.orientation.w = 1.0
+    box_name = "box"
+    scene.add_box(box_name, box_pose, size=(0.1, 0.1, 0.1))
 
+    timeout = 10
+    start = rospy.get_time()
+    seconds = rospy.get_time()
+    while (seconds - start < timeout) and not rospy.is_shutdown():
+      # Test if the box is in attached objects
+      attached_objects = scene.get_attached_objects([box_name])
+      is_attached = len(attached_objects.keys()) > 0
+          
+      # Test if the box is in the scene.
+      # Note that attaching the box will remove it from known_objects
+      is_known = box_name in scene.get_known_object_names()
+                
+      # Test if we are in the expected state
+      if (True == is_attached) and (True == is_known):
+        break
+           
+      # Sleep so that we give other threads time on the processor
+      rospy.sleep(0.1)
+      print(is_attached)
+      seconds = rospy.get_time()
+                              
+
+    print(seconds - start)
     print("hello")
 
 
