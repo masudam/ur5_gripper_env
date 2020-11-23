@@ -21,6 +21,7 @@ import moveit_commander
 import moveit_msgs.msg
 
 from sensor_msgs.msg import Image, CompressedImage
+#import geometry_msgs.msg
 from gazebo_msgs.msg import ModelStates
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState, GetModelState
@@ -34,6 +35,7 @@ from geometry_msgs.msg import (
         Pose,
         Point,
         Quaternion,
+        PoseStamped,
         )
 
 
@@ -62,6 +64,18 @@ class UrManipulator(object):
         self.hand_joint_name = "robotiq_85_left_knuckle_joint"
         self.hand_pos = {"close": math.pi/9, "open": 0.0}
 
+        # add obstacle(table) to moveit
+        self.scene = moveit_commander.PlanningSceneInterface()
+        rospy.sleep(2)
+        self.scene.remove_world_object("table")
+        box_pose = PoseStamped()
+        box_pose.header.frame_id = "world"
+        box_pose.pose.position.x = 0.5
+        box_pose.pose.position.y = -0.35
+        box_pose.pose.position.z = -0.35
+        box_pose.pose.orientation.w = 1.0
+        self.scene.add_box("table", box_pose, size=(0.4, 0.4, 0.3))
+
 
         # flag for task
         # nothing
@@ -84,8 +98,8 @@ class UrManipulator(object):
 
     def obj_random_spawn(self,obj_name="obj_1"):
         obj_pos = [0,0,0,0,0,0,0]
-        obj_pos[0] = 0.3 + random.uniform(-0.1,0.1)
-        obj_pos[1] = -0.3 + random.uniform(-0.1,0.1)
+        obj_pos[0] = 0.5 + random.uniform(-0.1,0.1)
+        obj_pos[1] = -0.35 + random.uniform(-0.1,0.1)
         obj_pos[2] = 0.33
 
         object_angle = random.uniform(0,math.pi)
@@ -167,37 +181,6 @@ if __name__ == '__main__':
     ur_manipulator.gripper_move("open")
     ur_manipulator.gripper_move("close")
 
-    import geometry_msgs.msg
-    scene = moveit_commander.PlanningSceneInterface()
-    box_pose = geometry_msgs.msg.PoseStamped()
-    box_pose.header.frame_id = "test_obstacle"
-    box_pose.pose.orientation.w = 1.0
-    box_name = "box"
-    scene.add_box(box_name, box_pose, size=(0.1, 0.1, 0.1))
-
-    timeout = 10
-    start = rospy.get_time()
-    seconds = rospy.get_time()
-    while (seconds - start < timeout) and not rospy.is_shutdown():
-      # Test if the box is in attached objects
-      attached_objects = scene.get_attached_objects([box_name])
-      is_attached = len(attached_objects.keys()) > 0
-          
-      # Test if the box is in the scene.
-      # Note that attaching the box will remove it from known_objects
-      is_known = box_name in scene.get_known_object_names()
-                
-      # Test if we are in the expected state
-      if (True == is_attached) and (True == is_known):
-        break
-           
-      # Sleep so that we give other threads time on the processor
-      rospy.sleep(0.1)
-      print(is_attached)
-      seconds = rospy.get_time()
-                              
-
-    print(seconds - start)
     print("hello")
 
 

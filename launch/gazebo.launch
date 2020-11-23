@@ -30,7 +30,7 @@
 
   <!-- spawn table -->
   <param name="table_description" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/table.urdf.xacro gazebo:=true"/>
-  <node name="spawn_table" pkg="gazebo_ros" type="spawn_model" args="-urdf -param table_description -model table -x 0.5 -y -0.5 -z 0.15"
+  <node name="spawn_table" pkg="gazebo_ros" type="spawn_model" args="-urdf -param table_description -model table -x 0.5 -y -0.35 -z 0.15"
     respawn="false" output="screen" />
 
 
