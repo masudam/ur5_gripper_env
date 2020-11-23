@@ -18,32 +18,28 @@
 
 
   <!-- push robot_description to factory and spawn robot in gazebo at the origin, change x,y,z arguments to spawn in a different position -->
-  <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model robot -x 0 -y 0 -z 0.5"
-    respawn="false" output="screen" />
+  <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model robot -x 0 -y 0 -z 0.5" respawn="false" output="screen" />
 
 
   <!-- spawn ur5 pole -->
   <param name="pole_description" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/ur_pole.urdf.xacro gazebo:=true"/>
-  <node name="spawn_pole" pkg="gazebo_ros" type="spawn_model" args="-urdf -param pole_description -model ur_pole -x 0 -y 0 -z 0.25"
-    respawn="false" output="screen" />
+  <node name="spawn_pole" pkg="gazebo_ros" type="spawn_model" args="-urdf -param pole_description -model ur_pole -x 0 -y 0 -z 0.25" respawn="false" output="screen" />
 
 
   <!-- spawn table -->
   <param name="table_description" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/table.urdf.xacro gazebo:=true"/>
-  <node name="spawn_table" pkg="gazebo_ros" type="spawn_model" args="-urdf -param table_description -model table -x 0.5 -y -0.35 -z 0.15"
-    respawn="false" output="screen" />
+  <node name="spawn_table" pkg="gazebo_ros" type="spawn_model" args="-urdf -param table_description -model table -x 0.5 -y -0.35 -z 0.15" respawn="false" output="screen" />
 
 
-
-
+  <!-- spawn object -->
   <param name="obj_description" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/objects/obj_1.urdf.xacro gazebo:=true"/>
-  <node name="spawn_obj_1" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description -model obj_1 -x 0.5 -y -0.5 -z 0.4"
-    respawn="false" output="screen" />
+  <node name="spawn_obj_1" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description -model obj_1 -x 0.5 -y -0.5 -z 0.4" respawn="false" output="screen" />
 
+  <param name="obj_description2" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/objects/obj_2.urdf.xacro gazebo:=true"/>
+  <!--node name="spawn_obj_2" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description2 -model obj_2 -x 0.5 -y -0.4 -z 0.4" respawn="false" output="screen" /-->
 
-
-
-
+  <param name="obj_description3" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/objects/obj_3.urdf.xacro gazebo:=true"/>
+  <!--node name="spawn_obj_3" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description3 -model obj_3 -x 0.5 -y -0.3 -z 0.4" respawn="false" output="screen" /-->
 
 
 
@@ -54,6 +50,5 @@
        e.g., for rviz-->
   <node name="robot_state_publisher" pkg="robot_state_publisher"
         type="robot_state_publisher" output="screen"/>
-
 
 </launch>

@@ -16,6 +16,7 @@ import roslib
 import rospkg
 from cv_bridge import CvBridge
 import tf
+from tf.transformations import *
 
 import moveit_commander
 import moveit_msgs.msg
@@ -62,7 +63,7 @@ class UrManipulator(object):
         self.arm_group = moveit_commander.MoveGroupCommander("ur5_arm")
         self.hand_group = moveit_commander.MoveGroupCommander("hand")
         self.hand_joint_name = "robotiq_85_left_knuckle_joint"
-        self.hand_pos = {"close": math.pi/9, "open": 0.0}
+        self.hand_pos = {"close": math.pi/6, "open": math.pi/12}
 
         # add obstacle(table) to moveit
         self.scene = moveit_commander.PlanningSceneInterface()
@@ -82,6 +83,7 @@ class UrManipulator(object):
 
         # param init
         #self.cmd = 0
+        self.action_range = [2, 9, 10, 10] # open/close, wrist, y, x
         self._reward = 0
 
 
@@ -153,9 +155,34 @@ class UrManipulator(object):
         self.hand_group.go({self.hand_joint_name: self.hand_pos[status]}, wait=True)
 
     def action(self, cmd):
-        pass
+        # decode cmd
+        if type(cmd) == str:
+            q = int(cmd)
+        else:
+            q = cmd
+        target_point = [0 for _ in range(len(self.action_range))]
+        for i in range(len(self.action_range)):
+            q, mod = divmod(q, self.action_range[i])
+            target_point[i] = mod
 
+        # change decoded cmd to position
+        target_x = 0.3 + (0.4/self.action_range[3]) * target_point[3]
+        target_y = -0.15 - (0.4/self.action_range[2]) * target_point[2]
+        wrist_angle = -math.pi/2 + (math.pi/self.action_range[2]) * target_point[1]
+        is_open = target_point[0]
 
+        target_pose=Pose()
+        target_pose.position = Point(x=target_x, y=target_y, z=-0.029)
+        qu = quaternion_from_euler(wrist_angle, math.pi/2, 0) # default (0, math.pi/2, 0)
+        target_pose.orientation = Quaternion(x=qu[0], y=qu[1], z=qu[2], w=qu[3])
+        #target_pose.orientation = Quaternion(x=0.0, y=0.7071, z=0.00, w=0.7071)
+        print(target_pose)
+        self.make_ik_move(target_pose)
+
+        if is_open:
+            self.gripper_move("open")
+        else:
+            self.gripper_move("close")
 
 
 
@@ -164,7 +191,7 @@ if __name__ == '__main__':
     rospy.init_node("ur_sample")
 
     ur_manipulator = UrManipulator()
-    ur_manipulator.reset_env()
+    #ur_manipulator.reset_env()
     print(ur_manipulator.get_angles())
     print(ur_manipulator.get_endpoint())
 
@@ -180,6 +207,11 @@ if __name__ == '__main__':
     ur_manipulator.gripper_move("close")
     ur_manipulator.gripper_move("open")
     ur_manipulator.gripper_move("close")
+
+    for _ in range(3):
+        action = np.argmax(np.random.rand(1800))
+        print(action)
+        ur_manipulator.action(action)
 
     print("hello")
 
