@@ -2,6 +2,7 @@
 <robot name="obj_1" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:include filename="$(find ur5_gripper_moveit_config)/env_urdf/common.xacro"/>
+  <xacro:include filename="$(find ur5_gripper_moveit_config)/env_urdf/objects/camera.gazebo.xacro"/>
 
   <link name="base_link">
     <inertial>
@@ -28,6 +29,7 @@
     <mu2>0.4</mu2>
   </gazebo>
 
+  <xacro:camera_gazebo_v0/>
 
 </robot>
 

@@ -39,22 +39,21 @@ from geometry_msgs.msg import (
         PoseStamped,
         )
 
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 
 class UrManipulator(object):
     def __init__(self):
         # Publishers
-        # must needed
         self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
         self.done_pub = rospy.Publisher("is_done",String,queue_size=4)
+        self.reset_touch_pub = rospy.Publisher("reset_touch_flag",String,queue_size=4)
 
-        # maybe need?
-        #self.image_pub = rospy.Publisher("baxter_view",CompressedImage,queue_size=4) # fixed img publish
-
-        # control parameters
-        self.bridge = CvBridge()
-
-        # other
         rospy.on_shutdown(self.clean_shutdown)
 
         # moveit func
@@ -75,9 +74,8 @@ class UrManipulator(object):
         box_pose.pose.orientation.w = 1.0
         self.scene.add_box("table", box_pose, size=(1, 1, 0.3))
 
-
         # flag for task
-        self_is_done = False
+        self.is_done = False
 
         # param init
         self.cmd = "0"
@@ -90,6 +88,10 @@ class UrManipulator(object):
         # something need~~
 
     def reset_env(self):
+        # init param
+        self.is_done = False
+        self.cmd = "0"
+
         self.rm_object()
         # arm reset
         self.set_neutral()
@@ -219,48 +221,66 @@ class UrManipulator(object):
 
     # if object fall off the table, return True else return False
     def check_done(self):
-        pass
+        obj_pos = self.get_obj_pos()
+        if obj_pos.position.z < 0.25:
+            return True
+        else:
+            return False
 
 
     def action_callback(self,data):
-        if cmd == "recover":
+        if is_int(data.data):
+            self.save_env_data(data.data)
+            self.cmd = data.data
+            self.action(self.cmd)
+            self.done_pub.publish(str(self.is_done)) # publish "True"/"False"
+        elif data.data == "recover":
             self.recover_env()
             return 0
-        self.save_env_data(data.data)
-        self.cmd = data.data
-        self.action(self.cmd)
-        self.done_pub.publish(str(self.is_done)) # publish "True"/"False"
+        elif data.data == "reset":
+            self.reset_env()
+            self.done_pub.publish(str(self.is_done)) # publish "True"/"False"
+        else:
+            print("unexcepted value!")
 
-    def listener():
+    def listener(self):
         rospy.Subscriber("actions", String, self.action_callback)
+        rospy.spin()
 
-    def recover_env():
+    def get_img(self):
+        for _ in range(2):
+            img_data = None
+            while img_data is None:
+                img_data = rospy.wait_for_message("/camera/image_raw/compressed", CompressedImage,timeout=None)
+
+    def recover_env(self):
         self.reset_env()
         # load env_data
         env_data = np.load("saved_env.npz")
-        before_action = env_data["before_action"]
-        action = env_data["action"]
+        before_action = env_data["before_action"][0]
+        action = env_data["action"][0]
         obj_pos = env_data["obj_pos"]
-
         # set env from data
-        self.acion(before_action)
+        self.action(before_action)
         self.replace_object(obj_pos)
-
+        self.reset_touch_pub.publish("flag from recover_env func")
         # do action
         self.action(action)
         self.done_pub.publish(str(self.is_done)) # publish "True"/"False"
 
-    
-    def save_env_data(action):
+    def get_obj_pos(self,obj_name="obj_1"):
         try:
             get_model = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
-            obj_pos = get_model("obj_1", "")
+            obj_pos = get_model(obj_name, "")
             obj_pos = obj_pos.pose
-            obj_list=[obj_pos.position.x, obj_pos.position.y, obj_pos.position.z, obj_pos.orientation.x, obj_pos.orientation.y, obj_pos.orientation.z, obj_pos.orientation.w]
-            saved_env = np.array([int(self_cmd)]+[int(action)]+obj_list)
-            np.savez("saved_env.npz", before_action=np.array([int(self_cmd)]), action=np.array([int(action)]), obj_pos=np.array(obj_list))
+            return obj_pos
         except rospy.ServiceException, e:
             rospy.loginfo("Get Model service call failed: {0}".format(e))
+
+    def save_env_data(self,action):
+        obj_pos = self.get_obj_pos()
+        obj_list=[obj_pos.position.x, obj_pos.position.y, obj_pos.position.z, obj_pos.orientation.x, obj_pos.orientation.y, obj_pos.orientation.z, obj_pos.orientation.w]
+        np.savez("saved_env.npz", before_action=np.array([int(self.cmd)]), action=np.array([int(action)]), obj_pos=np.array(obj_list))
 
 
 
@@ -279,19 +299,29 @@ if __name__ == '__main__':
     #ur_manipulator.make_ik_move(pose)
 
     ur_manipulator.reset_env()
+    ur_manipulator.save_env_data("800")
 
     before = rospy.get_time()
-    for i in range(200):
+    for i in range(30):
         #action = i
         action = np.argmax(np.random.rand(1800))
         print(action)
         ur_manipulator.action(action)
+        if ur_manipulator.is_done:
+            ur_manipulator.reset_env()
+
         if (i+1) % 25 == 0:
             print("!! {} step end now !!".format(i+1))
 
 
     after = rospy.get_time()
     print("action time: {}".format(after-before))
+
+    print("recovering...")
+    ur_manipulator.recover_env()
+
+    print("reset env")
+    ur_manipulator.reset_env()
 
     #ur_manipulator.action(0)
 

@@ -31,7 +31,7 @@ def main():
     ur_manipulator.reset_env()
 
     if args.recover:
-        cmd = "recover"
+        #cmd = "recover"
         ur_manipulator.recover_env()
 
     try:
