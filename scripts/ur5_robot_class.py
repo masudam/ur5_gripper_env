@@ -299,12 +299,12 @@ if __name__ == '__main__':
     #ur_manipulator.make_ik_move(pose)
 
     ur_manipulator.reset_env()
-    ur_manipulator.save_env_data("800")
+    #ur_manipulator.save_env_data("800")
 
     before = rospy.get_time()
     for i in range(30):
         #action = i
-        action = np.argmax(np.random.rand(1800))
+        action = np.argmax(np.random.rand(2592))
         print(action)
         ur_manipulator.action(action)
         if ur_manipulator.is_done:
@@ -317,8 +317,8 @@ if __name__ == '__main__':
     after = rospy.get_time()
     print("action time: {}".format(after-before))
 
-    print("recovering...")
-    ur_manipulator.recover_env()
+    #print("recovering...")
+    #ur_manipulator.recover_env()
 
     print("reset env")
     ur_manipulator.reset_env()
