@@ -41,8 +41,8 @@ class tac_watcher():
         rospy.Subscriber('reset_touch_flag', String, self.reset_flag)
         rospy.Subscriber(self.tac_name[0], ContactsState, self.inside_tac_callback)
         rospy.Subscriber(self.tac_name[1], ContactsState, self.inside_tac_callback)
-        #rospy.Subscriber(self.tac_name[2], ContactsState, self.outside_tac_callback)
-        #rospy.Subscriber(self.tac_name[3], ContactsState, self.outside_tac_callback)
+        rospy.Subscriber(self.tac_name[2], ContactsState, self.outside_tac_callback)
+        rospy.Subscriber(self.tac_name[3], ContactsState, self.outside_tac_callback)
 
         cc=0
         while not rospy.is_shutdown():
@@ -58,7 +58,7 @@ class tac_watcher():
 
 if __name__ == '__main__':
     rospy.init_node("tac_test")
-    tac_name_list = ["right_tip_inside_contact_state", "left_tip_inside_contact_state"]
+    tac_name_list = ["right_tip_inside_contact_state", "left_tip_inside_contact_state", "right_tip_outside_contact_state", "left_tip_outside_contact_state"]
     try:
         tc = tac_watcher(tac_name_list)
         tc.listener()
