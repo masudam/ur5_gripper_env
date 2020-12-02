@@ -16,10 +16,11 @@ class cvBridgeDemo:
         try:
             np_arr = np.fromstring(ros_image_compressed.data, np.uint8)
             input_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-        except CvBridgeError, e:
-            print e
+            #print(input_image.shape)
+        except CvBridgeError:
+            print("Error")
 
-        cv2.imshow(self.node_name, input_image)
+        cv2.imshow(self.node_name, input_image[90:310,25:375])
         cv2.waitKey(1)
 
     def cleanup(self):
