@@ -4,7 +4,7 @@ import math
 import random
 import numpy
 import sys
-from time import sleep
+#from time import sleep
 import cv2
 import copy
 import numpy as np
@@ -22,7 +22,6 @@ import moveit_commander
 import moveit_msgs.msg
 
 from sensor_msgs.msg import Image, CompressedImage
-#import geometry_msgs.msg
 from gazebo_msgs.msg import ModelStates
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState, GetModelState
@@ -51,7 +50,7 @@ class UrManipulator(object):
     def __init__(self):
         # Publishers
         self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
-        self.done_pub = rospy.Publisher("is_done",String,queue_size=4)
+        self.done_pub = rospy.Publisher("is_done",String,queue_size=10)
         self.reset_touch_pub = rospy.Publisher("reset_touch_flag",String,queue_size=4)
 
         rospy.on_shutdown(self.clean_shutdown)
@@ -87,18 +86,10 @@ class UrManipulator(object):
         print("\nExiting...")
         # something need~~
 
-    def reset_env(self):
-        # init param
-        self.is_done = False
-        self.cmd = "0"
-
-        self.rm_object()
-        # arm reset
-        self.set_neutral()
-        self.gripper_move("open")
-
-        # object position reset (checkout num)
-        self.obj_random_spawn()
+    def quit(self):
+        print("program end")
+        rospy.signal_shutdown("Quit")
+        sys.exit()
 
 
     def obj_random_spawn(self,obj_name="obj_1"):
@@ -111,7 +102,7 @@ class UrManipulator(object):
         obj_pos[5] = math.sin(object_angle/2)
         obj_pos[6] = math.cos(object_angle/2)
         
-        self.replace_object(obj_pos, obj_name="obj_1")
+        self.replace_object(obj_pos, obj_name=obj_name)
 
 
     def replace_object(self, place, obj_name="obj_1"):
@@ -123,6 +114,9 @@ class UrManipulator(object):
         modelstate.reference_frame = "world"
         modelstate.pose = Pose(position=pos, orientation=ori)
         req = self._obj_state(modelstate)
+        if req.success == False:
+            print("!!object state error!!")
+            self.quit()
 
     def rm_object(self, obj_name="obj_1"):
         # move object brhind arm
@@ -130,7 +124,7 @@ class UrManipulator(object):
         obj_pos[0] = -0.2
         obj_pos[1] = 0.2
         obj_pos[2] = 0.1
-        self.replace_object(obj_pos, obj_name="obj_1")
+        self.replace_object(obj_pos, obj_name=obj_name)
 
 
     def get_angles(self):
@@ -145,13 +139,19 @@ class UrManipulator(object):
     def set_neutral(self):
         print("go to neutral position...")
         joint_goal = [-0.7921126790274347, -0.932559083781797, 2.216348689347363, -2.854560900878817, -1.5707964956997724, -0.7921132469544414]
-        self.arm_group.go(joint_goal, wait=True)
+        req = self.arm_group.go(joint_goal, wait=True)
+        if req == False:
+            print("!!set neutral error!!")
+            self.quit()
         print("neutral position now")
 
     # move arm from endpoint
     def make_ik_move(self,pose):
         self.arm_group.set_pose_target(pose)
-        self.arm_group.go()
+        req = self.arm_group.go()
+        if req == False:
+            print("!!make ik error!!")
+            self.quit()
         self.arm_group.clear_pose_targets()
 
     # move from waypoint / current position -> wrist moved -> middle waypoints -> target_position
@@ -159,10 +159,8 @@ class UrManipulator(object):
         target_ep = pose
         waypoints = []
         now_ep = self.get_endpoint()
-        diff_x = target_ep.position.x - now_ep.position.x
-        diff_y = target_ep.position.y - now_ep.position.y
-        diff_z = target_ep.position.z - now_ep.position.z
-        distance = math.sqrt(diff_x**2 + diff_y**2)
+        diff = [target_ep.position.x - now_ep.position.x, target_ep.position.y - now_ep.position.y, target_ep.position.z - now_ep.position.z]
+        distance = math.sqrt(diff[0]**2 + diff[1]**2)
 
         num = int(1+distance*100 // 2) # number of update
         ep = now_ep
@@ -170,21 +168,45 @@ class UrManipulator(object):
         waypoints.append(copy.deepcopy(ep))
 
         for i in range(num-1):
-            ep.position.x += diff_x/num
-            ep.position.y += diff_y/num
-            ep.position.z += diff_z/num
+            ep.position.x += diff[0]/num
+            ep.position.y += diff[1]/num
+            ep.position.z += diff[2]/num
             waypoints.append(copy.deepcopy(ep))
 
         ep.position = Point(x=target_ep.position.x, y=target_ep.position.y,z=target_ep.position.z)
         ep.orientation = Quaternion(x=target_ep.orientation.x, y=target_ep.orientation.y, z=target_ep.orientation.z, w=target_ep.orientation.w)
         waypoints.append(copy.deepcopy(ep))
         (plan, fraction) = self.arm_group.compute_cartesian_path(waypoints, 0.01, 0.0, True)
-        self.arm_group.execute(plan)
+        req = self.arm_group.execute(plan)
 
+        if req == False:
+            print("!!Arm move error!!")
+            self.quit()
+
+        return num+1
 
     # move gripper / status : "open" or "close"
     def gripper_move(self,status):
-        self.hand_group.go({self.hand_joint_name: self.hand_pos[status]}, wait=True)
+        req = self.hand_group.go({self.hand_joint_name: self.hand_pos[status]}, wait=True)
+        if req == False:
+            print("!!gripper move error!!")
+            self.quit()
+
+
+    def reset_env(self):
+        # init param
+        self.is_done = False
+        self.cmd = "0"
+        self.rm_object()
+
+        # arm reset
+        self.set_neutral()
+        self.gripper_move("close")
+
+        # object position reset (checkout num)
+        self.obj_random_spawn()
+        rospy.sleep(0.1)
+
 
     def action(self, cmd):
         # decode cmd
@@ -208,7 +230,7 @@ class UrManipulator(object):
         qu = quaternion_from_euler(wrist_angle, math.pi/2, 0) # default position (0, math.pi/2, 0)
         target_pose.orientation = Quaternion(x=qu[0], y=qu[1], z=qu[2], w=qu[3])
         #target_pose.orientation = Quaternion(x=0.0, y=0.7071, z=0.00, w=0.7071)
-        self.make_way_move(target_pose)
+        path_len = self.make_way_move(target_pose)
 
         # move grippper to desired position
         if is_open:
@@ -229,17 +251,20 @@ class UrManipulator(object):
 
 
     def action_callback(self,data):
+        print("do {}".format(data.data))
         if is_int(data.data):
             self.save_env_data(data.data)
             self.cmd = data.data
             self.action(self.cmd)
             self.done_pub.publish(str(self.is_done)) # publish "True"/"False"
-        elif data.data == "recover":
-            self.recover_env()
-            return 0
         elif data.data == "reset":
+            self.save_env_data(data.data)
             self.reset_env()
             self.done_pub.publish(str(self.is_done)) # publish "True"/"False"
+        elif data.data == "recover": # if everything is OK, this won't use
+            print("!something wrong!")
+            self.recover_env()
+            return 0
         else:
             print("unexcepted value!")
 
@@ -247,25 +272,27 @@ class UrManipulator(object):
         rospy.Subscriber("actions", String, self.action_callback)
         rospy.spin()
 
-    def get_img(self):
-        for _ in range(2):
-            img_data = None
-            while img_data is None:
-                img_data = rospy.wait_for_message("/camera/image_raw/compressed", CompressedImage,timeout=None)
-
     def recover_env(self):
-        self.reset_env()
+        print("start recover...")
+        self.rm_object()
         # load env_data
         env_data = np.load("saved_env.npz")
         before_action = env_data["before_action"][0]
         action = env_data["action"][0]
         obj_pos = env_data["obj_pos"]
-        # set env from data
+        if action == -1: # if action is reset, do reset
+            print("do reset")
+            self.reset_env()
+            self.done_pub.publish(str(self.is_done)) # publish "True"/"False"
+            return 0
+        print("set arm and obj pos")
+        self.reset_touch_pub.publish("flag from recover_env func")
         self.action(before_action)
         self.replace_object(obj_pos)
-        self.reset_touch_pub.publish("flag from recover_env func")
-        # do action
-        self.action(action)
+        print("recover end")
+        print("do {}".format(action))
+
+        self.action(action) # do action
         self.done_pub.publish(str(self.is_done)) # publish "True"/"False"
 
     def get_obj_pos(self,obj_name="obj_1"):
@@ -280,7 +307,15 @@ class UrManipulator(object):
     def save_env_data(self,action):
         obj_pos = self.get_obj_pos()
         obj_list=[obj_pos.position.x, obj_pos.position.y, obj_pos.position.z, obj_pos.orientation.x, obj_pos.orientation.y, obj_pos.orientation.z, obj_pos.orientation.w]
+        if action == "reset":
+            action = -1
         np.savez("saved_env.npz", before_action=np.array([int(self.cmd)]), action=np.array([int(action)]), obj_pos=np.array(obj_list))
+
+    def get_img(self):  # not used
+        for _ in range(2):
+            img_data = Nonys.exit()
+            while img_data is None:
+                img_data = rospy.wait_for_message("/camera/image_raw/compressed", CompressedImage,timeout=None)
 
 
 

@@ -13,8 +13,8 @@ class tac_watcher():
         self.outside_touch_pub = rospy.Publisher("contact_outside", String, queue_size=10)
 
     def ac_callback(self,data):
-        print("new action is {}".format(data.data))
-        print("flag reset")
+        print("new action is {}, flag reset".format(data.data))
+        #print("flag reset")
         self.touch_inside = 0
         self.touch_outside = 0
 
@@ -44,13 +44,13 @@ class tac_watcher():
         rospy.Subscriber(self.tac_name[2], ContactsState, self.outside_tac_callback)
         rospy.Subscriber(self.tac_name[3], ContactsState, self.outside_tac_callback)
 
-        cc=0
+        cc=1
         while not rospy.is_shutdown():
-            cc+=1
+            #cc+=1
             self.inside_touch_pub.publish(str(self.touch_inside))
             self.outside_touch_pub.publish(str(self.touch_outside))
             rate.sleep()
-            if cc % 250 == 0:
+            if cc % 500 == 0:
                 cc =0
                 print("contact_inside : {}, contact_outside : {}".format(self.touch_inside,self.touch_outside))
 
