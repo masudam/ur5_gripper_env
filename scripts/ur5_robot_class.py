@@ -337,7 +337,7 @@ if __name__ == '__main__':
     #ur_manipulator.save_env_data("800")
 
     before = rospy.get_time()
-    for i in range(30):
+    for i in range(10):
         #action = i
         action = np.argmax(np.random.rand(2592))
         print(action)
