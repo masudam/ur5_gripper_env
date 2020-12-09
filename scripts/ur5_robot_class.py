@@ -94,8 +94,8 @@ class UrManipulator(object):
 
     def obj_random_spawn(self,obj_name="obj_1"):
         obj_pos = [0,0,0,0,0,0,0]
-        obj_pos[0] = 0.5 + random.uniform(-0.05,0.05)
-        obj_pos[1] = -0.35 + random.uniform(-0.05,0.05)
+        obj_pos[0] = 0.55 + random.uniform(-0.05,0.05)
+        obj_pos[1] = -0.4 + random.uniform(-0.05,0.05)
         obj_pos[2] = 0.33
 
         object_angle = random.uniform(0,math.pi)
