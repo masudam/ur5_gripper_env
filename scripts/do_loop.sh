@@ -2,7 +2,7 @@
   
 trap "kill 0" 2
 
-for i in `seq 5`
+for i in `seq 7`
 do
 echo $i
 echo "next loop..."

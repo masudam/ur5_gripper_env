@@ -19,6 +19,7 @@ def talker():
         rospy.loginfo(str_co)
         pub.publish(str_co)
         count = (count + 1) % 7
+        break
 
 if __name__ == '__main__':
     try:
