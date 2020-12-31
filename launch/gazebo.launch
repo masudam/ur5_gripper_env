@@ -33,13 +33,13 @@
 
   <!-- spawn object -->
   <param name="obj_description" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/objects/obj_1.urdf.xacro gazebo:=true"/>
-  <node name="spawn_obj_1" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description -model obj_1 -x 0.5 -y -0.35 -z 0.4" respawn="false" output="screen" />
+  <!--node name="spawn_obj_1" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description -model obj_1 -x 0.5 -y -0.35 -z 0.4" respawn="false" output="screen" /-->
 
-  <param name="obj_description2" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/objects/obj_2.urdf.xacro gazebo:=true"/>
-  <!--node name="spawn_obj_2" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description2 -model obj_2 -x 0.5 -y -0.4 -z 0.4" respawn="false" output="screen" /-->
+  <param name="obj_description2" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/objects/cup.urdf.xacro gazebo:=true"/>
+  <!--node name="spawn_cup" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description2 -model cup -x 0.5 -y -0.4 -z 0.4" respawn="false" output="screen" /-->
 
-  <param name="obj_description3" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/objects/obj_3.urdf.xacro gazebo:=true"/>
-  <!--node name="spawn_obj_3" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description3 -model obj_3 -x 0.5 -y -0.3 -z 0.4" respawn="false" output="screen" /-->
+  <param name="obj_description3" command="$(find xacro)/xacro.py --inorder $(find ur5_gripper_moveit_config)/env_urdf/objects/pan.urdf.xacro gazebo:=true"/>
+  <node name="spawn_pan" pkg="gazebo_ros" type="spawn_model" args="-urdf -param obj_description3 -model pan -x 0.5 -y -0.3 -z 0.4" respawn="false" output="screen" />
 
 
 

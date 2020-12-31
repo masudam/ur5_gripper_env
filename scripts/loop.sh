@@ -24,7 +24,7 @@ fi
 sleep 10
 
 #gz physics -u 0
-gz physics -s 0.0025
+gz physics -s 0.0022
 roslaunch ur5_gripper_moveit_config move_group.launch &
 move_pid=$!
 sleep 8

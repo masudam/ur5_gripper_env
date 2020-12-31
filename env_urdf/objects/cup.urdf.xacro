@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+<robot name="cup" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find ur5_gripper_moveit_config)/env_urdf/common.xacro"/>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <cylinder_inertial mass="0.3" radius="0.035" length="0.05"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.05" radius="0.035"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.05" radius="0.035"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="handle_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="handle_link1"/>
+    <origin xyz="0.0385 0 0.015" rpy="0 0 0"/>
+  </joint>
+
+  <link name="handle_link1">
+    <inertial>
+      <box_inertial mass="0.01" height="0.028" width="0.007" depth="0.004"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.024 0.007 0.004"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.024 0.007 0.004" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="handle_joint2" type="fixed">
+    <parent link="handle_link1"/>
+    <child link="handle_link2"/>
+    <origin xyz="0.0115 0 -0.012" rpy="0 0 0"/>
+  </joint>
+
+  <link name="handle_link2">
+    <inertial>
+      <box_inertial mass="0.01" height="0.005" width="0.007" depth="0.028"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.005 0.007 0.028"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.005 0.007 0.028"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="handle_joint3" type="fixed">
+    <parent link="handle_link2"/>
+    <child link="handle_link3"/>
+    <origin xyz="-0.0115 0 -0.012" rpy="0 0 0"/>
+  </joint>
+
+  <link name="handle_link3">
+    <inertial>
+      <box_inertial mass="0.01" height="0.024" width="0.007" depth="0.004"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.024 0.007 0.004"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.024 0.007 0.004"/>
+      </geometry>
+    </collision>
+  </link>
+
+
+  <gazebo reference="base_link">
+    <material>Gazebo/Green</material>
+    <!--mu1>0.4</mu1>
+    <mu2>0.4</mu2-->
+  </gazebo>
+
+  <gazebo reference="handle_link1">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+  <gazebo reference="handle_link2">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+  <gazebo reference="handle_link3">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+
+</robot>
+
+
+
+
+
+

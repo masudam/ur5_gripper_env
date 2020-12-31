@@ -33,7 +33,7 @@
 
 
   <gazebo reference="base_link">
-    <material>Gazebo/DarkGrey</material>
+    <material>Gazebo/Grey</material>
     <mu1>0.4</mu1>
     <mu2>0.4</mu2>
   </gazebo>

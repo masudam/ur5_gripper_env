@@ -59,7 +59,6 @@ class UrManipulator(object):
         self.arm_group = moveit_commander.MoveGroupCommander("ur5_arm")
         self.hand_group = moveit_commander.MoveGroupCommander("hand")
         self.hand_joint_name = "robotiq_85_left_knuckle_joint"
-        self.hand_pos = {"close": math.pi/6, "open": math.pi/12}
 
         # add obstacle(table) to moveit
         self.scene = moveit_commander.PlanningSceneInterface()
@@ -82,6 +81,26 @@ class UrManipulator(object):
         #self._reward = 0
 
 
+        #self.obj_name = "obj_1"
+        #self.obj_name = "cup"
+        self.obj_name = "pan"
+
+        if self.obj_name == "obj_1":
+            self.hand_pos = {"close": math.pi/6, "open": math.pi/12}
+            self.arm_z = -0.028
+            self.neutral_pos = [-0.7921126790274347, -0.932559083781797, 2.216348689347363, -2.854560900878817, -1.5707964956997724, -0.7921132469544414]
+        elif self.obj_name == "pan":
+            self.hand_pos = {"close": 2*math.pi/9, "open": math.pi/12}
+            self.arm_z = -0.028
+            self.neutral_pos = [-0.7921126790274347, -0.932559083781797, 2.216348689347363, -2.854560900878817, -1.5707964956997724, -0.7921132469544414]
+        elif self.obj_name == "cup":
+            self.hand_pos = {"close": 7*math.pi/30, "open": math.pi/12}
+            self.arm_z = -0.018
+            self.neutral_pos = [-0.7921042864763512, -0.9608381179123651, 2.2183414790107907, -2.8270424125133777, -1.5707232684701857, -0.7921530669682122]
+
+
+
+
     def clean_shutdown(self):
         print("\nExiting...")
         # something need~~
@@ -92,7 +111,7 @@ class UrManipulator(object):
         sys.exit()
 
 
-    def obj_random_spawn(self,obj_name="obj_1"):
+    def obj_random_spawn(self):
         obj_pos = [0,0,0,0,0,0,0]
         obj_pos[0] = 0.55 + random.uniform(-0.05,0.05)
         obj_pos[1] = -0.4 + random.uniform(-0.05,0.05)
@@ -102,10 +121,10 @@ class UrManipulator(object):
         obj_pos[5] = math.sin(object_angle/2)
         obj_pos[6] = math.cos(object_angle/2)
         
-        self.replace_object(obj_pos, obj_name=obj_name)
+        self.replace_object(obj_pos, self.obj_name)
 
 
-    def replace_object(self, place, obj_name="obj_1"):
+    def replace_object(self, place, obj_name):
         pos = Point(x=place[0], y=place[1], z=place[2]+0.01)
         ori = Quaternion(x=place[3], y=place[4], z=place[5], w=place[6])
         # set position
@@ -118,13 +137,13 @@ class UrManipulator(object):
             print("!!object state error!!")
             self.quit()
 
-    def rm_object(self, obj_name="obj_1"):
+    def rm_object(self, obj_name):
         # move object brhind arm
         obj_pos = [0,0,0,0,0,0,0]
         obj_pos[0] = -0.2
         obj_pos[1] = 0.2
         obj_pos[2] = 0.1
-        self.replace_object(obj_pos, obj_name=obj_name)
+        self.replace_object(obj_pos, obj_name)
 
 
     def get_angles(self):
@@ -138,8 +157,7 @@ class UrManipulator(object):
     # goto action 0 position
     def set_neutral(self):
         print("go to neutral position...")
-        joint_goal = [-0.7921126790274347, -0.932559083781797, 2.216348689347363, -2.854560900878817, -1.5707964956997724, -0.7921132469544414]
-        req = self.arm_group.go(joint_goal, wait=True)
+        req = self.arm_group.go(self.neutral_pos, wait=True)
         if req == False:
             print("!!set neutral error!!")
             self.quit()
@@ -197,7 +215,7 @@ class UrManipulator(object):
         # init param
         self.is_done = False
         self.cmd = "0"
-        self.rm_object()
+        self.rm_object(self.obj_name)
 
         # arm reset
         self.set_neutral()
@@ -226,7 +244,7 @@ class UrManipulator(object):
         is_open = target_point[0]
 
         target_pose=Pose()
-        target_pose.position = Point(x=target_x, y=target_y, z=-0.028)
+        target_pose.position = Point(x=target_x, y=target_y, z=self.arm_z)
         qu = quaternion_from_euler(wrist_angle, math.pi/2, 0) # default position (0, math.pi/2, 0)
         target_pose.orientation = Quaternion(x=qu[0], y=qu[1], z=qu[2], w=qu[3])
         #target_pose.orientation = Quaternion(x=0.0, y=0.7071, z=0.00, w=0.7071)
@@ -243,7 +261,7 @@ class UrManipulator(object):
 
     # if object fall off the table, return True else return False
     def check_done(self):
-        obj_pos = self.get_obj_pos()
+        obj_pos = self.get_obj_pos(self.obj_name)
         if obj_pos.position.z < 0.25:
             return True
         else:
@@ -274,7 +292,7 @@ class UrManipulator(object):
 
     def recover_env(self):
         print("start recover...")
-        self.rm_object()
+        self.rm_object(self.obj_name)
         # load env_data
         env_data = np.load("saved_env.npz")
         before_action = env_data["before_action"][0]
@@ -288,14 +306,14 @@ class UrManipulator(object):
         print("set arm and obj pos")
         self.reset_touch_pub.publish("flag from recover_env func")
         self.action(before_action)
-        self.replace_object(obj_pos)
+        self.replace_object(obj_pos,self.obj_name)
         print("recover end")
         print("do {}".format(action))
 
         self.action(action) # do action
         self.done_pub.publish(str(self.is_done)) # publish "True"/"False"
 
-    def get_obj_pos(self,obj_name="obj_1"):
+    def get_obj_pos(self,obj_name):
         try:
             get_model = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
             obj_pos = get_model(obj_name, "")
@@ -305,7 +323,7 @@ class UrManipulator(object):
             rospy.loginfo("Get Model service call failed: {0}".format(e))
 
     def save_env_data(self,action):
-        obj_pos = self.get_obj_pos()
+        obj_pos = self.get_obj_pos(self.obj_name)
         obj_list=[obj_pos.position.x, obj_pos.position.y, obj_pos.position.z, obj_pos.orientation.x, obj_pos.orientation.y, obj_pos.orientation.z, obj_pos.orientation.w]
         if action == "reset":
             action = -1
@@ -330,8 +348,9 @@ if __name__ == '__main__':
     #print(ur_manipulator.get_endpoint())
 
     #pose = ur_manipulator.get_endpoint()
-    #pose.position.y -= 0.2
+    #pose.position.z += 0.01
     #ur_manipulator.make_ik_move(pose)
+    #ur_manipulator.gripper_move("open")
 
     ur_manipulator.reset_env()
     #ur_manipulator.save_env_data("800")
@@ -359,4 +378,5 @@ if __name__ == '__main__':
     ur_manipulator.reset_env()
 
     #ur_manipulator.action(0)
+
 
